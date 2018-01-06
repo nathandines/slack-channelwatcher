@@ -34,5 +34,5 @@ SLACK_AUTH_TOKEN='<slack_token_here>' slack-channelwatcher
 
 Run in Docker:
 ```
-docker run nathandines/slack-channelwatcher:latest
+docker run -e 'SLACK_AUTH_TOKEN=<slack_token_here>' nathandines/slack-channelwatcher:latest
 ```
