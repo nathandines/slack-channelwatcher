@@ -70,7 +70,7 @@ func main() {
 			if len(previousChannels) != 0 && !stringInSlice(channel.ID, previousChannels) {
 				messageParams := slack.PostMessageParameters{}
 				messageParams.Username = "New Slack Channel"
-				messageParams.IconEmoji = ":bell:"
+				messageParams.IconEmoji = ":eyes:"
 				messageText := fmt.Sprintf("Channel #%s has just become available", channel.Name)
 				_, _, err := slackAPI.PostMessage(postChannel, messageText, messageParams)
 				if err != nil {
