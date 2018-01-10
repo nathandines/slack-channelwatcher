@@ -20,18 +20,41 @@ func stringInSlice(a string, list []string) bool {
 }
 
 func main() {
-	logger := log.New(os.Stdout, "slack-bot: ", log.Lshortfile|log.LstdFlags)
+	logger := log.New(os.Stdout, "slack-bot: ", log.LstdFlags)
 
 	authToken := os.Getenv("SLACK_AUTH_TOKEN")
+	autoJoinChannelVar := os.Getenv("SLACK_AUTO_JOIN_CHANNEL")
+	sleepTimeString := os.Getenv("SLACK_CHECK_INTERVAL")
+	postChannel := os.Getenv("SLACK_CHANNEL")
+
 	if authToken == "" {
 		logger.Fatal("No value found for environment variable: \"SLACK_AUTH_TOKEN\"")
 	}
+
+	autoJoinChannel, err := strconv.ParseBool(autoJoinChannelVar)
+	if err != nil {
+		if autoJoinChannelVar == "" {
+			autoJoinChannel = false
+		} else {
+			logger.Fatal("\"SLACK_AUTO_JOIN_CHANNEL\" must be a boolean value")
+		}
+	}
+
+	sleepTimeInt, err := strconv.Atoi(sleepTimeString)
+	if err != nil {
+		if sleepTimeString == "" {
+			sleepTimeInt = 300 // Default sleep time as 5 minutes
+		} else {
+			logger.Fatal(err)
+		}
+	}
+
+	sleepTime := time.Duration(sleepTimeInt) * time.Second
 
 	slackAPI := slack.New(authToken)
 	slack.SetLogger(logger)
 	slackAPI.SetDebug(false)
 
-	postChannel := os.Getenv("SLACK_CHANNEL")
 	// If no destination channel has been defined, use slackbot
 	if postChannel == "" {
 		IMChannels, err := slackAPI.GetIMChannels()
@@ -47,16 +70,7 @@ func main() {
 		}
 	}
 
-	sleepTimeInt := 300 // Default sleep time as 5 minutes
-	sleepTimeString := os.Getenv("SLACK_CHECK_INTERVAL")
-	if sleepTimeString != "" {
-		var err error
-		sleepTimeInt, err = strconv.Atoi(sleepTimeString)
-		if err != nil {
-			logger.Fatal(err)
-		}
-	}
-	sleepTime := time.Duration(sleepTimeInt) * time.Second
+	logger.Println("Monitoring Slack channels...")
 
 	currentChannels := []string{}
 	for {
@@ -69,14 +83,18 @@ func main() {
 		for _, channel := range channels {
 			if len(previousChannels) != 0 && !stringInSlice(channel.ID, previousChannels) {
 				messageParams := slack.PostMessageParameters{}
-				messageParams.Username = "New Slack Channel"
+				messageParams.Username = "Slack Channel Watcher"
 				messageParams.IconEmoji = ":eyes:"
-				messageText := fmt.Sprintf("Channel #%s has just become available", channel.Name)
+				messageText := fmt.Sprintf("New channel: <#%s|%s>", channel.ID, channel.Name)
 				_, _, err := slackAPI.PostMessage(postChannel, messageText, messageParams)
 				if err != nil {
 					logger.Printf("%s\n", err)
 				}
 				logger.Println(messageText)
+				if autoJoinChannel {
+					slackAPI.JoinChannel(channel.Name)
+					logger.Printf("Joined channel: #%s", channel.Name)
+				}
 			}
 			currentChannels = append(currentChannels, channel.ID)
 		}

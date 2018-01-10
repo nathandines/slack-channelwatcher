@@ -17,9 +17,11 @@ which are configurable:
 - **SLACK_AUTH_TOKEN** - Your Slack API authentication token. For more
   information on creating this, [check Slack's documentation](https://get.slack.help/hc/en-us/articles/215770388-Create-and-regenerate-API-tokens).
   (**Required**)
+- **SLACK_AUTO_JOIN_CHANNEL** - Specify if this app should automatically join
+  the new channels it finds using the defined credentials
+- **SLACK_CHANNEL** - Destination channel for notifications. It's highly
 - **SLACK_CHECK_INTERVAL** *(seconds)* - Define the frequency at which the app
   will poll for channel changes. (**Default:** 300)
-- **SLACK_CHANNEL** - Destination channel for notifications. It's highly
   recommended to use the channel identifier rather than the channel name, in
   case of the event that the channel name should change. (**Default:**
   `@slackbot`)
